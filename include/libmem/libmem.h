@@ -106,8 +106,10 @@ typedef uint32_t lm_prot_t;
  *        necessarily fully supported by libmem.
  */
 enum {
+	LM_ARCH_GENERIC = 0,
+	
 	/* ARM */
-	LM_ARCH_ARMV7 = 0, /* ARMv7 */
+	LM_ARCH_ARMV7, /* ARMv7 */
 	LM_ARCH_ARMV8,     /* ARMv8 */
 	LM_ARCH_THUMBV7,   /* ARMv7, thumb mode */
 	LM_ARCH_THUMBV8,   /* ARMv8, thumb mode */
@@ -1169,7 +1171,7 @@ LM_SigScanEx(const lm_process_t *process,
  *
  * @return The function returns the architecture of the system. It can be one of:
  * - `LM_ARCH_X86` for 32-bit x86.
- * - `LM_ARCH_AMD64` for 64-bit x86.
+ * - `LM_ARCH_X64` for 64-bit x86.
  * - Others (check the enum for `lm_arch_t`)
  */
 LM_API lm_arch_t LM_CALL

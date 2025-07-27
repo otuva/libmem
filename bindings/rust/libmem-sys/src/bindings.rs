@@ -55,30 +55,31 @@ pub const LM_PROT_XW: lm_prot_t = 6;
 pub const LM_PROT_RW: lm_prot_t = 3;
 pub const LM_PROT_XRW: lm_prot_t = 7;
 
-pub const LM_ARCH_ARMV7: lm_arch_t = 0;
-pub const LM_ARCH_ARMV8: lm_arch_t = 1;
-pub const LM_ARCH_THUMBV7: lm_arch_t = 2;
-pub const LM_ARCH_THUMBV8: lm_arch_t = 3;
-pub const LM_ARCH_ARMV7EB: lm_arch_t = 4;
-pub const LM_ARCH_THUMBV7EB: lm_arch_t = 5;
-pub const LM_ARCH_ARMV8EB: lm_arch_t = 6;
-pub const LM_ARCH_THUMBV8EB: lm_arch_t = 7;
-pub const LM_ARCH_AARCH64: lm_arch_t = 8;
-pub const LM_ARCH_MIPS: lm_arch_t = 9;
-pub const LM_ARCH_MIPS64: lm_arch_t = 10;
-pub const LM_ARCH_MIPSEL: lm_arch_t = 11;
-pub const LM_ARCH_MIPSEL64: lm_arch_t = 12;
-pub const LM_ARCH_X86_16: lm_arch_t = 13;
-pub const LM_ARCH_X86: lm_arch_t = 14;
-pub const LM_ARCH_X64: lm_arch_t = 15;
-pub const LM_ARCH_PPC32: lm_arch_t = 16;
-pub const LM_ARCH_PPC64: lm_arch_t = 17;
-pub const LM_ARCH_PPC64LE: lm_arch_t = 18;
-pub const LM_ARCH_SPARC: lm_arch_t = 19;
-pub const LM_ARCH_SPARC64: lm_arch_t = 20;
-pub const LM_ARCH_SPARCEL: lm_arch_t = 21;
-pub const LM_ARCH_SYSZ: lm_arch_t = 22;
-pub const LM_ARCH_MAX: lm_arch_t = 23;
+pub const LM_ARCH_GENERIC: lm_arch_t = 0;
+pub const LM_ARCH_ARMV7: lm_arch_t = 1;
+pub const LM_ARCH_ARMV8: lm_arch_t = 2;
+pub const LM_ARCH_THUMBV7: lm_arch_t = 3;
+pub const LM_ARCH_THUMBV8: lm_arch_t = 4;
+pub const LM_ARCH_ARMV7EB: lm_arch_t = 5;
+pub const LM_ARCH_THUMBV7EB: lm_arch_t = 6;
+pub const LM_ARCH_ARMV8EB: lm_arch_t = 7;
+pub const LM_ARCH_THUMBV8EB: lm_arch_t = 8;
+pub const LM_ARCH_AARCH64: lm_arch_t = 9;
+pub const LM_ARCH_MIPS: lm_arch_t = 10;
+pub const LM_ARCH_MIPS64: lm_arch_t = 11;
+pub const LM_ARCH_MIPSEL: lm_arch_t = 12;
+pub const LM_ARCH_MIPSEL64: lm_arch_t = 13;
+pub const LM_ARCH_X86_16: lm_arch_t = 14;
+pub const LM_ARCH_X86: lm_arch_t = 15;
+pub const LM_ARCH_X64: lm_arch_t = 16;
+pub const LM_ARCH_PPC32: lm_arch_t = 17;
+pub const LM_ARCH_PPC64: lm_arch_t = 18;
+pub const LM_ARCH_PPC64LE: lm_arch_t = 19;
+pub const LM_ARCH_SPARC: lm_arch_t = 20;
+pub const LM_ARCH_SPARC64: lm_arch_t = 21;
+pub const LM_ARCH_SPARCEL: lm_arch_t = 22;
+pub const LM_ARCH_SYSZ: lm_arch_t = 23;
+pub const LM_ARCH_MAX: lm_arch_t = 24;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -571,6 +572,14 @@ extern "C" {
 extern "C" {
     #[doc = " Retrieves information about a specified process identified by its process ID.\n\n @param pid The process ID of the process for which you want to\n retrieve information.\n @param process_out A pointer to the `lm_process_t` structure that will be\n populated with information about the specified process.\n\n @return `LM_TRUE` if the process information was successfully\n retrieved or `LM_FALSE` if there was an issue during the\n retrieval process."]
     pub fn LM_GetProcessEx(pid: lm_pid_t, process_out: *mut lm_process_t) -> lm_bool_t;
+}
+extern "C" {
+    #[doc = "Retrieves the command line arguments of a process."]
+    pub fn LM_GetCommandLine(process: *const lm_process_t) -> *mut *mut lm_char_t;
+}
+extern "C" {
+    #[doc = "Frees a command line buffer obtained from `LM_GetCommandLine`"]
+    pub fn LM_FreeCommandLine(cmdline: *mut *mut lm_char_t);
 }
 extern "C" {
     #[doc = " Searches for a process by name and returns whether the process was\n found or not.\n\n @param process_name The name of the process you are trying to find\n (e.g `game.exe`). It can also be a relative path, such as\n `/game/hello` for a process at `/usr/share/game/hello`.\n @param process_out A pointer to the `lm_process_t` structure that will be\n populated with information about the found process.\n\n @return `LM_TRUE` if the process with the specified name was found\n successfully or `LM_FALSE` otherwise."]

@@ -123,6 +123,39 @@ py_LM_GetProcessEx(PyObject *self,
 /****************************************/
 
 static PyObject *
+py_LM_GetCommandLine(PyObject *self,
+		     PyObject *args)
+{
+	py_lm_process_obj *pyproc;
+	lm_char_t **cmdline;
+	lm_char_t **ptr;
+	PyObject *pylist;
+	PyObject *pystr;
+
+	if (!PyArg_ParseTuple(args, "O", &pyproc))
+		return NULL;
+
+	cmdline = LM_GetCommandLine(&pyproc->proc);
+	if (!cmdline)
+		return Py_BuildValue("");
+
+	pylist = PyList_New(0);
+	if (!pylist)
+		goto FREE_EXIT;
+
+	for (ptr = cmdline; *ptr != NULL; ptr = &ptr[1]) {
+		pystr = PyUnicode_FromString(*ptr);
+		PyList_Append(pylist, (PyObject *)pystr);
+	}
+FREE_EXIT:
+	LM_FreeCommandLine(cmdline);
+
+	return pylist;
+}
+
+/****************************************/
+
+static PyObject *
 py_LM_FindProcess(PyObject *self,
 		  PyObject *args)
 {
@@ -1456,6 +1489,7 @@ static PyMethodDef libmem_methods[] = {
 	{ "LM_EnumProcesses", py_LM_EnumProcesses, METH_NOARGS, "Lists all current living processes" },
 	{ "LM_GetProcess", py_LM_GetProcess, METH_NOARGS, "Gets information about the calling process" },
 	{ "LM_GetProcessEx", py_LM_GetProcessEx, METH_VARARGS, "Gets information about a process from a process ID" },
+	{ "LM_GetCommandLine", py_LM_GetCommandLine, METH_VARARGS, "Retrieves the command line arguments of a process" },
 	{ "LM_FindProcess", py_LM_FindProcess, METH_VARARGS, "Searches for an existing process" },
 	{ "LM_IsProcessAlive", py_LM_IsProcessAlive, METH_VARARGS, "Checks if a process is alive" },
 	{ "LM_GetBits", py_LM_GetBits, METH_VARARGS, "Checks if a process is alive" },
@@ -1623,6 +1657,8 @@ PyInit__libmem(void)
 	DECL_GLOBAL_PROT(LM_PROT_XW);
 	DECL_GLOBAL_PROT(LM_PROT_RW);
 	DECL_GLOBAL_PROT(LM_PROT_XRW);
+
+	DECL_GLOBAL_ARCH(LM_ARCH_GENERIC);
 
 	DECL_GLOBAL_ARCH(LM_ARCH_ARMV7);
 	DECL_GLOBAL_ARCH(LM_ARCH_ARMV8);
