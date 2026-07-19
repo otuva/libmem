@@ -38,6 +38,13 @@ declare -gr WINDOWS_GNU_VARIANTS=(
   static
 )
 
+declare -gr ANDROID_PLATFORMS=(
+  aarch64-android
+)
+declare -gr ANDROID_VARIANTS=(
+  static
+)
+
 SCRIPT_DIR=$(dirname -- "$(realpath -m -- "$0")")
 declare -gr SCRIPT_DIR
 PROJECT_DIR=$(dirname -- "$SCRIPT_DIR")
@@ -61,6 +68,11 @@ function define_targets() {
         TARGETS+=("${platform}-${variant}")
       done
     fi
+  done
+  for platform in "${ANDROID_PLATFORMS[@]}"; do
+    for variant in "${ANDROID_VARIANTS[@]}"; do
+      TARGETS+=("${platform}-${variant}")
+    done
   done
   declare -gr TARGETS
 }
@@ -133,6 +145,7 @@ function main() {
   case "$target" in
   *-linux-*) _build_in_docker "$target" "$source_dir" "$out_dir" ;;
   *-windows-gnu-*) _build_in_docker "$target" "$source_dir" "$out_dir" ;;
+  *-android-*) _build_android "$target" "$source_dir" "$out_dir" ;;
   *) _build_locally "$target" "$source_dir" "$out_dir" ;;
   esac
 
@@ -200,6 +213,25 @@ function _build_locally() {
     bash <<<"set -Eeuo pipefail; shopt -s inherit_errexit; $(declare -f do_build); do_build; exit 0"
 }
 
+# Builds an Android target locally using the Android NDK's CMake toolchain.
+# Requires ANDROID_NDK_ROOT to point to an installed NDK (see ANDROID_NDK_VERSION
+# in .github/workflows/rust-android-test.yml for the version this is tested against).
+function _build_android() {
+  local target=$1 source_dir=$2 out_dir=$3
+
+  : "${ANDROID_NDK_ROOT:?ANDROID_NDK_ROOT must be set to an installed Android NDK path}"
+
+  init_temp_dir
+  _=_ \
+    _TARGET="$target" \
+    _SOURCE_DIR="$source_dir" \
+    _BUILD_DIR="${g_temp_dir}/build" \
+    _OUT_DIR="$out_dir" \
+    ANDROID_NDK_ROOT="$ANDROID_NDK_ROOT" \
+    ANDROID_PLATFORM="${ANDROID_PLATFORM:-android-26}" \
+    bash <<<"set -Eeuo pipefail; shopt -s inherit_errexit; $(declare -f do_build); do_build; exit 0"
+}
+
 # Perform the build and copy the results to the output directory.
 # This function must be self-contained and exportable.
 # Inputs:
@@ -252,6 +284,24 @@ function do_build() {
       if [[ -n "$flags" ]]; then
         variant_conf+=(-DCMAKE_C_FLAGS="$flags" -DCMAKE_CXX_FLAGS="$flags")
       fi
+      ;;
+    *-android-*)
+      local android_abi
+      case "$_TARGET" in
+      aarch64-*) android_abi='arm64-v8a' ;;
+      *)
+        printf 'error: Unable to determine Android ABI from target: %s\n' "$_TARGET" >&2
+        return 1
+        ;;
+      esac
+      variant_conf+=(
+        -G 'Unix Makefiles'
+        -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_ROOT:?ANDROID_NDK_ROOT required for android builds}/build/cmake/android.toolchain.cmake"
+        -DANDROID_ABI="$android_abi"
+        -DANDROID_PLATFORM="${ANDROID_PLATFORM:-android-26}"
+        -DANDROID_STL=c++_shared
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+      )
       ;;
     *)
       local flags

@@ -65,6 +65,7 @@ jobs:
               {"target": "x86_64-windows-gnu-msvcrt-static", "runs-on": "ubuntu-latest"}
               {"target": "x86_64-windows-gnu-ucrt-shared", "runs-on": "ubuntu-latest"}
               {"target": "x86_64-windows-gnu-ucrt-static", "runs-on": "ubuntu-latest"}
+              {"target": "aarch64-android-static", "runs-on": "ubuntu-latest"}
               '
           )
           printf 'Matrix: %s\n' "$(jq <<< "$matrix")"
@@ -78,12 +79,26 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     runs-on: ${{ matrix.runs-on }}
+    env:
+      ANDROID_NDK_VERSION: 27.0.12077973
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.checkout-branch }}
           submodules: true
+      - name: Set up Java
+        if: contains(matrix.target, '-android-')
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Set up Android SDK
+        if: contains(matrix.target, '-android-')
+        uses: android-actions/setup-android@v3
+      - name: Install Android toolchain
+        if: contains(matrix.target, '-android-')
+        run: sdkmanager "platform-tools" "platforms;android-35" "ndk;${ANDROID_NDK_VERSION}" "cmake;3.22.1"
       - name: Build
         run: ./tools/build-release.sh "$BUILD_TARGETS"
         shell: bash
