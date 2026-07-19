@@ -198,6 +198,8 @@ fn main() {
         vec!["user32", "psapi", "ntdll", "shell32"]
     } else if target_os == "linux" {
         vec!["dl", "m", "stdc++"]
+    } else if target_os == "android" {
+        vec!["dl", "m", "c++_shared"]
     } else if target_os == "freebsd" {
         vec!["dl", "kvm", "procstat", "elf", "m", "stdc++"]
     } else {
