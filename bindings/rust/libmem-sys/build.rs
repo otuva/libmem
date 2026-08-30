@@ -49,10 +49,18 @@ fn get_fetch_information() -> FetchInfo {
     };
 
     // Format archive prefix
-    let release_target = format!(
-        "libmem-{}-{}-{}-{}-{}",
-        version, target_arch, target_os, target_env, build_type
-    );
+    // NOTE: target_env can be empty (e.g. on Android), in which case it is omitted
+    let release_target = if target_env.is_empty() {
+        format!(
+            "libmem-{}-{}-{}-{}",
+            version, target_arch, target_os, build_type
+        )
+    } else {
+        format!(
+            "libmem-{}-{}-{}-{}-{}",
+            version, target_arch, target_os, target_env, build_type
+        )
+    };
 
     // Format archive URL
     let archive_ext = "tar.gz";
@@ -159,6 +167,10 @@ fn run_tests() {
             "libmem-1337-x86_64-windows-gnu-ucrt-static",
             ["1337", "windows", "x86_64", "gnu", "llvm"],
         ),
+        (
+            "libmem-1337-aarch64-android-static",
+            ["1337", "android", "aarch64", "", ""],
+        ),
     ]);
 
     for (expected, cargo_vars) in test_cases {
@@ -198,6 +210,8 @@ fn main() {
         vec!["user32", "psapi", "ntdll", "shell32"]
     } else if target_os == "linux" {
         vec!["dl", "m", "stdc++"]
+    } else if target_os == "android" {
+        vec!["dl", "m", "c++_shared"]
     } else if target_os == "freebsd" {
         vec!["dl", "kvm", "procstat", "elf", "m", "stdc++"]
     } else {
